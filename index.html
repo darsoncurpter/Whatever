@@ -5,16 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Beard-Bouncers</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
         body {
             margin: 0;
             background-color: #000000;
             overflow: hidden;
             width: 100vw;
             height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #box-container {
+            position: relative;
+            width: 95vmin;
+            height: 95vmin;
+            /* Changed border to outline to prevent collision misalignments */
+            outline: 4px solid #ffffff;
+            overflow: hidden;
         }
         #george {
             position: absolute;
-            width: 200px; /* Adjust size as needed */
+            top: 0;
+            left: 0;
+            width: 15vmin; 
             height: auto;
             user-select: none;
             will-change: transform;
@@ -23,79 +39,73 @@
 </head>
 <body>
 
-    <img id="george" src="George.png" alt="George">
+    <div id="box-container">
+        <img id="george" src="George.png" alt="George">
+    </div>
 
     <script>
         const img = document.getElementById('george');
-        
-        // Initial position
-        let posX = Math.random() * (window.innerWidth - 200);
-        let posY = Math.random() * (window.innerHeight - 200);
-        
-        // Speed and direction vectors
+        const container = document.getElementById('box-container');
+
+        let posX = 0;
+        let posY = 0;
         let speedX = 3;
         let speedY = 3;
 
-        // Apply random initial directions
         if (Math.random() > 0.5) speedX *= -1;
         if (Math.random() > 0.5) speedY *= -1;
 
+        function initPosition() {
+            const limitX = container.clientWidth - img.clientWidth;
+            const limitY = container.clientHeight - img.clientHeight;
+            posX = Math.random() * Math.max(0, limitX);
+            posY = Math.random() * Math.max(0, limitY);
+        }
+
         function updatePosition() {
-            // Get current dimensions dynamically
             const imgWidth = img.clientWidth;
             const imgHeight = img.clientHeight;
-            const screenWidth = window.innerWidth;
-            const screenHeight = window.innerHeight;
+            const boxWidth = container.clientWidth;
+            const boxHeight = container.clientHeight;
 
-            // Move the image
             posX += speedX;
             posY += speedY;
 
-            // Bounce off left/right walls
             if (posX <= 0) {
                 posX = 0;
                 speedX = Math.abs(speedX);
-            } else if (posX + imgWidth >= screenWidth) {
-                posX = screenWidth - imgWidth;
+            } else if (posX + imgWidth >= boxWidth) {
+                posX = boxWidth - imgWidth;
                 speedX = -Math.abs(speedX);
             }
 
-            // Bounce off top/bottom walls
             if (posY <= 0) {
                 posY = 0;
                 speedY = Math.abs(speedY);
-            } else if (posY + imgHeight >= screenHeight) {
-                posY = screenHeight - imgHeight;
+            } else if (posY + imgHeight >= boxHeight) {
+                posY = boxHeight - imgHeight;
                 speedY = -Math.abs(speedY);
             }
 
-            // Render position using transform for optimal performance
             img.style.transform = `translate(${posX}px, ${posY}px)`;
-
             requestAnimationFrame(updatePosition);
         }
 
-        // Wait for image load to capture accurate dimensions
-        img.addEventListener('load', () => {
+        function startAnimation() {
+            initPosition();
             requestAnimationFrame(updatePosition);
-        });
+        }
 
-        // Fallback execution if image fails or is cached
+        img.addEventListener('load', startAnimation);
         if (img.complete) {
-            requestAnimationFrame(updatePosition);
+            startAnimation();
         }
 
-        // Handle window resizing safely
         window.addEventListener('resize', () => {
-            const screenWidth = window.innerWidth;
-            const screenHeight = window.innerHeight;
-            
-            if (posX + img.clientWidth > screenWidth) {
-                posX = screenWidth - img.clientWidth;
-            }
-            if (posY + img.clientHeight > screenHeight) {
-                posY = screenHeight - img.clientHeight;
-            }
+            const maxW = container.clientWidth - img.clientWidth;
+            const maxH = container.clientHeight - img.clientHeight;
+            if (posX > maxW) posX = Math.max(0, maxW);
+            if (posY > maxH) posY = Math.max(0, maxH);
         });
     </script>
 </body>
