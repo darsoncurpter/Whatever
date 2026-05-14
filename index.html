@@ -17,12 +17,12 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            font-family: sans-serif;
         }
         #box-container {
             position: relative;
             width: 95vmin;
             height: 95vmin;
-            /* Changed border to outline to prevent collision misalignments */
             outline: 4px solid #ffffff;
             overflow: hidden;
         }
@@ -35,9 +35,22 @@
             user-select: none;
             will-change: transform;
         }
+        #score-board {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            user-select: none;
+            z-index: 10;
+        }
     </style>
 </head>
 <body>
+
+    <div id="score-board">COINS:0</div>
 
     <div id="box-container">
         <img id="george" src="George.png" alt="George">
@@ -46,11 +59,13 @@
     <script>
         const img = document.getElementById('george');
         const container = document.getElementById('box-container');
+        const scoreBoard = document.getElementById('score-board');
 
         let posX = 0;
         let posY = 0;
         let speedX = 3;
         let speedY = 3;
+        let coins = 0;
 
         if (Math.random() > 0.5) speedX *= -1;
         if (Math.random() > 0.5) speedY *= -1;
@@ -67,6 +82,7 @@
             const imgHeight = img.clientHeight;
             const boxWidth = container.clientWidth;
             const boxHeight = container.clientHeight;
+            let bounced = false;
 
             posX += speedX;
             posY += speedY;
@@ -74,17 +90,26 @@
             if (posX <= 0) {
                 posX = 0;
                 speedX = Math.abs(speedX);
+                bounced = true;
             } else if (posX + imgWidth >= boxWidth) {
                 posX = boxWidth - imgWidth;
                 speedX = -Math.abs(speedX);
+                bounced = true;
             }
 
             if (posY <= 0) {
                 posY = 0;
                 speedY = Math.abs(speedY);
+                bounced = true;
             } else if (posY + imgHeight >= boxHeight) {
                 posY = boxHeight - imgHeight;
                 speedY = -Math.abs(speedY);
+                bounced = true;
+            }
+
+            if (bounced) {
+                coins += 1;
+                scoreBoard.textContent = `COINS:${coins}`;
             }
 
             img.style.transform = `translate(${posX}px, ${posY}px)`;
