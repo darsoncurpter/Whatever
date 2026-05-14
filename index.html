@@ -35,22 +35,99 @@
             user-select: none;
             will-change: transform;
         }
-        #score-board {
+        #ui-wrapper {
             position: absolute;
             top: 20px;
             right: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+            z-index: 10;
+        }
+        #score-board {
             color: #ffffff;
             font-size: 24px;
             font-weight: bold;
             letter-spacing: 1px;
             user-select: none;
-            z-index: 10;
+        }
+        #shop-btn {
+            background-color: #ffffff;
+            color: #000000;
+            border: none;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: opacity 0.2s;
+        }
+        #shop-btn:hover {
+            opacity: 0.8;
+        }
+        #shop-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background-color: #111111;
+            border: 2px solid #ffffff;
+            padding: 15px;
+            width: 250px;
+            margin-top: 10px;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .shop-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            color: #ffffff;
+        }
+        .item-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+        }
+        .buy-btn {
+            background-color: #00ff00;
+            color: #000000;
+            border: none;
+            padding: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .buy-btn:disabled {
+            background-color: #555555;
+            color: #888888;
+            cursor: not-allowed;
         }
     </style>
 </head>
 <body>
 
-    <div id="score-board">COINS:0</div>
+    <div id="ui-wrapper">
+        <div id="score-board">COINS:0</div>
+        <button id="shop-btn">Open Shop</button>
+        
+        <div id="shop-menu">
+            <div class="shop-item">
+                <div class="item-info">
+                    <span>Multiplier (x<span id="mult-val">1</span>)</span>
+                    <span id="mult-cost">Cost: 10</span>
+                </div>
+                <button id="buy-mult" class="buy-btn">Upgrade</button>
+            </div>
+            <div class="shop-item">
+                <div class="item-info">
+                    <span>Speed (+<span id="speed-val">0</span>)</span>
+                    <span id="speed-cost">Cost: 25</span>
+                </div>
+                <button id="buy-speed" class="buy-btn">Upgrade</button>
+            </div>
+        </div>
+    </div>
 
     <div id="box-container">
         <img id="george" src="George.png" alt="George">
@@ -60,15 +137,75 @@
         const img = document.getElementById('george');
         const container = document.getElementById('box-container');
         const scoreBoard = document.getElementById('score-board');
+        const shopBtn = document.getElementById('shop-btn');
+        const shopMenu = document.getElementById('shop-menu');
+        
+        const buyMultBtn = document.getElementById('buy-mult');
+        const multValSpan = document.getElementById('mult-val');
+        const multCostSpan = document.getElementById('mult-cost');
+
+        const buySpeedBtn = document.getElementById('buy-speed');
+        const speedValSpan = document.getElementById('speed-val');
+        const speedCostSpan = document.getElementById('speed-cost');
 
         let posX = 0;
         let posY = 0;
-        let speedX = 3;
-        let speedY = 3;
+        let baseSpeedX = 3;
+        let baseSpeedY = 3;
+        let directionX = Math.random() > 0.5 ? 1 : -1;
+        let directionY = Math.random() > 0.5 ? 1 : -1;
+        
         let coins = 0;
+        let multiplier = 1;
+        let speedUpgrades = 0;
 
-        if (Math.random() > 0.5) speedX *= -1;
-        if (Math.random() > 0.5) speedY *= -1;
+        let multCost = 10;
+        let speedCost = 25;
+
+        shopBtn.addEventListener('click', () => {
+            if (shopMenu.style.display === 'flex') {
+                shopMenu.style.display = 'none';
+                shopBtn.textContent = 'Open Shop';
+            } else {
+                shopMenu.style.display = 'flex';
+                shopBtn.textContent = 'Close Shop';
+                updateShopButtons();
+            }
+        });
+
+        function updateShopButtons() {
+            buyMultBtn.disabled = coins < multCost;
+            buySpeedBtn.disabled = coins < speedCost;
+        }
+
+        buyMultBtn.addEventListener('click', () => {
+            if (coins >= multCost) {
+                coins -= multCost;
+                multiplier += 1;
+                multCost = Math.floor(multCost * 1.8);
+                
+                scoreBoard.textContent = `COINS:${coins}`;
+                multValSpan.textContent = multiplier;
+                multCostSpan.textContent = `Cost: ${multCost}`;
+                updateShopButtons();
+            }
+        });
+
+        buySpeedBtn.addEventListener('click', () => {
+            if (coins >= speedCost) {
+                coins -= speedCost;
+                speedUpgrades += 1;
+                speedCost = Math.floor(speedCost * 1.5);
+                
+                baseSpeedX += 1;
+                baseSpeedY += 1;
+
+                scoreBoard.textContent = `COINS:${coins}`;
+                speedValSpan.textContent = speedUpgrades;
+                speedCostSpan.textContent = `Cost: ${speedCost}`;
+                updateShopButtons();
+            }
+        });
 
         function initPosition() {
             const limitX = container.clientWidth - img.clientWidth;
@@ -84,32 +221,35 @@
             const boxHeight = container.clientHeight;
             let bounced = false;
 
-            posX += speedX;
-            posY += speedY;
+            posX += baseSpeedX * directionX;
+            posY += baseSpeedY * directionY;
 
             if (posX <= 0) {
                 posX = 0;
-                speedX = Math.abs(speedX);
+                directionX = 1;
                 bounced = true;
             } else if (posX + imgWidth >= boxWidth) {
                 posX = boxWidth - imgWidth;
-                speedX = -Math.abs(speedX);
+                directionX = -1;
                 bounced = true;
             }
 
             if (posY <= 0) {
                 posY = 0;
-                speedY = Math.abs(speedY);
+                directionY = 1;
                 bounced = true;
             } else if (posY + imgHeight >= boxHeight) {
                 posY = boxHeight - imgHeight;
-                speedY = -Math.abs(speedY);
+                directionY = -1;
                 bounced = true;
             }
 
             if (bounced) {
-                coins += 1;
+                coins += multiplier;
                 scoreBoard.textContent = `COINS:${coins}`;
+                if (shopMenu.style.display === 'flex') {
+                    updateShopButtons();
+                }
             }
 
             img.style.transform = `translate(${posX}px, ${posY}px)`;
